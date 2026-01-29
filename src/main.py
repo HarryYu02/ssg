@@ -1,6 +1,8 @@
 import os
 import shutil
 
+from markdown_to_html_node import markdown_to_html_node
+
 
 def copy_tree(src, dest):
     abs_src = os.path.abspath(src)
@@ -23,9 +25,35 @@ def copy_tree(src, dest):
             os.mkdir(abs_content_dest_path)
             copy_tree(abs_content_path, abs_content_dest_path)
 
+def extract_title(markdown):
+    lines = markdown.split("\n")
+    for line in lines:
+        if line.startswith("# "):
+            return line[2:]
+    raise Exception("Error: markdown has no h1 header")
+
+def generate_page(from_path, template_path, dest_path):
+    print(f"Generating page from {from_path} to {dest_path} using {template_path}")
+    with open(from_path, "r") as from_file:
+        markdown = from_file.read()
+        with open(template_path, "r") as template_file:
+            template = template_file.read()
+            htmlnode = markdown_to_html_node(markdown)
+            html_content = htmlnode.to_html()
+            title = extract_title(markdown)
+            template = template.replace("{{ Title }}", title)
+            template = template.replace("{{ Content }}", html_content)
+
+            dest_dir = os.path.dirname(dest_path)
+            if not os.path.exists(dest_path):
+                os.makedirs(dest_dir, exist_ok=True)
+                with open(dest_path, "w") as dest_file:
+                    dest_file.write(template)
+
 
 def main():
     copy_tree("static", "public")
+    generate_page("content/index.md", "template.html", "public/index.html")
 
 if __name__ == "__main__":
     main()

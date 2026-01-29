@@ -41,18 +41,30 @@ def markdown_to_html_node(markdown):
             case BlockType.CODE:
                 block_node = ParentNode("pre", [ParentNode("code", [LeafNode(None, block[4:-3])])])
             case BlockType.QUOTE:
-                block_node = ParentNode("q", [])
-                transform_text_and_append_to_parent_node(block, block_node)
+                block_node = ParentNode("blockquote", [])
+                quote = ""
+                lines = block.split("\n")
+                for line in lines:
+                    if line.startswith("> "):
+                        quote += line[2:]
+                    elif line.startswith(">"):
+                        quote += line[1:]
+                    quote += "\n"
+                transform_text_and_append_to_parent_node(quote, block_node)
             case BlockType.UNORDERED_LIST:
                 block_node = ParentNode("ul", [])
                 lines = block.split("\n")
                 for line in lines:
-                    block_node.children.append(LeafNode("li", line[2:]))
+                    list_item = ParentNode("li", [])
+                    transform_text_and_append_to_parent_node(line[2:], list_item)
+                    block_node.children.append(list_item)
             case BlockType.ORDERED_LIST:
                 block_node = ParentNode("ol", [])
                 lines = block.split("\n")
                 for line_num in range(1, len(lines)+1):
-                    block_node.children.append(LeafNode("li", lines[line_num-1][get_num_digits(line_num)+2:]))
+                    list_item = ParentNode("li", [])
+                    transform_text_and_append_to_parent_node(lines[line_num-1][get_num_digits(line_num)+2:], list_item)
+                    block_node.children.append(list_item)
             case _:
                 raise Exception("Error: unkown block type")
         if block_node:
