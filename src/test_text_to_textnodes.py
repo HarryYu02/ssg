@@ -11,7 +11,7 @@ from text_to_textnodes import (
 from textnode import TextNode, TextType
 
 
-class TestUtils(unittest.TestCase):
+class TestTextToTextNodes(unittest.TestCase):
     def test_non_plain(self):
         bold_node = TextNode("This is text with a `code block` word", TextType.BOLD)
         new_nodes = split_nodes_delimiter([bold_node], "`", TextType.CODE)
