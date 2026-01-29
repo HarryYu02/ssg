@@ -18,3 +18,6 @@ class HTMLNode():
 
     def __repr__(self):
         return f"HTML Node:\nTag: {self.tag}\nValue: {self.value}\nChildren: {self.children}\nProps: {self.props}"
+
+def text_node_to_html_node(text_node):
+    pass
