@@ -14,7 +14,7 @@ def split_nodes_delimiter(old_nodes, delimiter, text_type):
             continue
 
         splitted = old_node.text.split(delimiter)
-        if len(splitted) < 3 or len(splitted) % 2 == 0:
+        if len(splitted) % 2 == 0:
             raise Exception("Error: node not properly enclosed")
 
         for i in range(0, len(splitted)):
@@ -53,6 +53,8 @@ def split_nodes_image(old_nodes):
                 new_nodes.append(TextNode(text[:idx], TextType.PLAIN))
             new_nodes.append(TextNode(alt, TextType.IMAGE, url))
             text = text[idx+len(alt)+len(url)+5:]
+        if len(text) > 0:
+            new_nodes.append(TextNode(text, TextType.PLAIN))
 
     return new_nodes
 
@@ -78,6 +80,16 @@ def split_nodes_link(old_nodes):
                 new_nodes.append(TextNode(text[:idx], TextType.PLAIN))
             new_nodes.append(TextNode(link_text, TextType.LINK, url))
             text = text[idx+len(link_text)+len(url)+4:]
+        if len(text) > 0:
+            new_nodes.append(TextNode(text, TextType.PLAIN))
 
     return new_nodes
 
+def text_to_textnodes(text):
+    new_nodes = [TextNode(text, TextType.PLAIN)]
+    new_nodes = split_nodes_delimiter(new_nodes, "**", TextType.BOLD)
+    new_nodes = split_nodes_delimiter(new_nodes, "_", TextType.ITALIC)
+    new_nodes = split_nodes_delimiter(new_nodes, "`", TextType.CODE)
+    new_nodes = split_nodes_image(new_nodes)
+    new_nodes = split_nodes_link(new_nodes)
+    return new_nodes
