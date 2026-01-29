@@ -7,6 +7,23 @@ from parentnode import ParentNode
 from leafnode import LeafNode
 
 
+def get_num_digits(num):
+    return math.floor(math.log10(abs(num)))+1
+
+def count_prefix_char(prefix, s):
+    count = 0
+    i = 0
+    while s[i] == prefix:
+        count += 1
+        i += 1
+    return count
+
+def transform_text_and_append_to_parent_node(text, parent):
+    block_textnodes = text_to_textnodes(text)
+    for textnode in block_textnodes:
+        leafnode = text_node_to_html_node(textnode)
+        parent.children.append(leafnode)
+
 def markdown_to_html_node(markdown):
     html_node = ParentNode("div", [])
     blocks = markdown_to_blocks(markdown)
@@ -15,46 +32,29 @@ def markdown_to_html_node(markdown):
         block_node = None
         match block_type:
             case BlockType.PARAGRAPH:
-                parent = ParentNode("p", [])
-                block_textnodes = text_to_textnodes(block.replace("\n", " "))
-                for textnode in block_textnodes:
-                    leafnode = text_node_to_html_node(textnode)
-                    parent.children.append(leafnode)
-                html_node.children.append(parent)
+                block_node = ParentNode("p", [])
+                transform_text_and_append_to_parent_node(block.replace("\n", " "), block_node)
             case BlockType.HEADING:
-                count = 0
-                i = 0
-                while block[i] == "#":
-                    count += 1
-                    i += 1
-                parent = ParentNode(f"h{count}", [])
-                block_textnodes = text_to_textnodes(block[count+1:])
-                for textnode in block_textnodes:
-                    leafnode = text_node_to_html_node(textnode)
-                    parent.children.append(leafnode)
-                html_node.children.append(parent)
+                count = count_prefix_char("#", block)
+                block_node = ParentNode(f"h{count}", [])
+                transform_text_and_append_to_parent_node(block[count+1:], block_node)
             case BlockType.CODE:
-                parent = ParentNode("pre", [ParentNode("code", [LeafNode(None, block[4:-3])])])
-                html_node.children.append(parent)
+                block_node = ParentNode("pre", [ParentNode("code", [LeafNode(None, block[4:-3])])])
             case BlockType.QUOTE:
-                parent = ParentNode("q", [])
-                block_textnodes = text_to_textnodes(block)
-                for textnode in block_textnodes:
-                    leafnode = text_node_to_html_node(textnode)
-                    parent.children.append(leafnode)
-                html_node.children.append(parent)
+                block_node = ParentNode("q", [])
+                transform_text_and_append_to_parent_node(block, block_node)
             case BlockType.UNORDERED_LIST:
-                parent = ParentNode("ul", [])
+                block_node = ParentNode("ul", [])
                 lines = block.split("\n")
                 for line in lines:
-                    parent.children.append(LeafNode("li", line[2:]))
-                html_node.children.append(parent)
+                    block_node.children.append(LeafNode("li", line[2:]))
             case BlockType.ORDERED_LIST:
-                parent = ParentNode("ol", [])
+                block_node = ParentNode("ol", [])
                 lines = block.split("\n")
                 for line_num in range(1, len(lines)+1):
-                    parent.children.append(LeafNode("li", lines[line_num-1][math.floor(math.log10(abs(line_num)))+3:]))
-                html_node.children.append(parent)
+                    block_node.children.append(LeafNode("li", lines[line_num-1][get_num_digits(line_num)+2:]))
             case _:
                 raise Exception("Error: unkown block type")
+        if block_node:
+            html_node.children.append(block_node)
     return html_node
